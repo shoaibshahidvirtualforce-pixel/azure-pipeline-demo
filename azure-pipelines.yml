@@ -1,0 +1,46 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+- script: |
+
+    echo "Project ID: $(PROJECT_ID)"
+    echo "Test Plan: $(TEST_PLAN_ID)"
+    echo "Environment: $(ENVIRONMENT)"
+
+    RESPONSE=$(curl -s -X POST "$(KUALITEE_API_URL)" \
+      -H "token: $(KUALITEE_TOKEN)" \
+      -H "Content-Type: application/json" \
+      -d "{
+            \"projectId\": \"$(PROJECT_ID)\",
+            \"testPlanId\": \"$(TEST_PLAN_ID)\",
+            \"environment\": \"$(ENVIRONMENT)\"
+          }")
+
+    echo "API Response:"
+    echo "$RESPONSE"
+
+    STATUS=$(echo "$RESPONSE" | jq -r '.status')
+    MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
+    PASSRATE=$(echo "$RESPONSE" | jq -r '.passRate')
+
+    echo "Status: $STATUS"
+    echo "Pass Rate: $PASSRATE%"
+    echo "Message: $MESSAGE"
+
+    if [ "$STATUS" != "PASS" ]; then
+      echo "##vso[task.logissue type=error]Quality Gate Failed: $MESSAGE"
+      exit 1
+    fi
+
+    echo "Quality Gate Passed."
+
+  displayName: 'Validate Kualitee Quality Gate'
+
+- script: |
+    echo "Deploying to $(ENVIRONMENT)..."
+  displayName: 'Deploy'
