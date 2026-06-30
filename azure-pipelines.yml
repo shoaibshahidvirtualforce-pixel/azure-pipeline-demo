@@ -18,6 +18,7 @@ steps:
       -d "{
             \"projectId\": \"$(PROJECT_ID)\",
             \"testPlanId\": \"$(TEST_PLAN_ID)\",
+            \"status\": \"Pass\",
             \"environment\": \"$(ENVIRONMENT)\"
           }")
 
